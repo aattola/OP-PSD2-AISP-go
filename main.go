@@ -32,9 +32,6 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	clientId := os.Getenv("OP_CLIENT_ID")
-	clientSecret := os.Getenv("OP_CLIENT_SECRET")
-
 	client := req.DevMode()
 
 	file, err := os.ReadFile("privateJwks.json")
@@ -78,18 +75,19 @@ func main() {
 	client.EnableInsecureSkipVerify() // TODO: remove this line somehow?
 	client.SetTimeout(10 * time.Second)
 
-	response, err := client.R().SetFormData(map[string]string{
-		"grant_type":    "client_credentials",
-		"scope":         "accounts",
-		"client_id":     clientId,
-		"client_secret": clientSecret,
-	}).Post(OP_AUTH_SERVER + "/oauth/token")
-	if err != nil {
-
-		log.Fatalln(err, "failed to get access token")
-	}
-
-	log.Println("res: ", response.String())
-	log.Println("status: ", response.Status, response.StatusCode)
+	registration.RegisterTPP(client, OP_AUTH_SERVER, signedKey)
+	//response, err := client.R().SetFormData(map[string]string{
+	//	"grant_type":    "client_credentials",
+	//	"scope":         "accounts",
+	//	"client_id":     clientId,
+	//	"client_secret": clientSecret,
+	//}).Post(OP_AUTH_SERVER + "/oauth/token")
+	//if err != nil {
+	//
+	//	log.Fatalln(err, "failed to get access token")
+	//}
+	//
+	//log.Println("res: ", response.String())
+	//log.Println("status: ", response.Status, response.StatusCode)
 
 }
