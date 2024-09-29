@@ -102,4 +102,5 @@ go.work
 
 tpp.json
 privateJwks.json
+tppRegistration.json
 .env

@@ -1,7 +1,8 @@
 package registration
 
 import (
-	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/imroc/req/v3"
@@ -13,8 +14,37 @@ import (
 	"time"
 )
 
-func RegisterTPP(client *req.Client, OpAuthServer string, signedJWTKey string) {
-	apiKey := os.Getenv("OP_CLIENT_ID")
+type TPPRegistration struct {
+	ClientID              string   `json:"client_id"`
+	ClientIDIssuedAt      int      `json:"client_id_issued_at"`
+	ClientSecret          string   `json:"client_secret"`
+	ClientSecretExpiresAt int      `json:"client_secret_expires_at"`
+	APIKey                string   `json:"api_key"`
+	ClientName            string   `json:"client_name"`
+	RedirectUris          []string `json:"redirect_uris"`
+	GrantTypes            []string `json:"grant_types"`
+	SoftwareID            string   `json:"software_id"`
+	Scope                 string   `json:"scope"`
+	JwksEndpoint          string   `json:"jwks_endpoint"`
+	SoftwareRoles         []string `json:"software_roles"`
+}
+
+func RegisterTPP(client *req.Client, OpAuthServer string, signedJWTKey string) (TPPRegistration, error) {
+	file, err := os.ReadFile("tppRegistration.json")
+	if err == nil {
+		log.Println("tppRegistration.json found, using values from there")
+
+		var registration TPPRegistration
+		err := json.Unmarshal(file, &registration)
+		if err != nil {
+			return TPPRegistration{}, err
+		}
+		return registration, nil
+	}
+
+	log.Println("No tppRegistration.json found, registering TPP")
+
+	apiKey := os.Getenv("OP_API_KEY")
 
 	r := client.R().SetContentType("application/jwt")
 
@@ -28,6 +58,18 @@ func RegisterTPP(client *req.Client, OpAuthServer string, signedJWTKey string) {
 	log.Println("status code", response.StatusCode)
 	log.Println("response", response.String())
 
+	err = os.WriteFile("tppRegistration.json", response.Bytes(), 0666)
+	if err != nil {
+		return TPPRegistration{}, errors.Join(errors.New("failed to write tppRegistration.json"), err)
+	}
+
+	var tppRegistration TPPRegistration
+	err = response.UnmarshalJson(&tppRegistration)
+	if err != nil {
+		return TPPRegistration{}, err
+	}
+
+	return tppRegistration, nil
 }
 
 func CreateRegistration(qsealcKey jwk.Key, softwareStatementJwt string) (string, error) {
@@ -41,10 +83,6 @@ func CreateRegistration(qsealcKey jwk.Key, softwareStatementJwt string) (string,
 	token.Set("grant_types", []string{"client_credentials", "authorization_code", "refresh_token"})
 	token.Set("software_statement", softwareStatementJwt)
 	token.Set("aud", "https://op.fi/")
-
-	mappi, _ := token.AsMap(context.Background())
-
-	log.Println(mappi, "token")
 
 	signedKey, err := jwt.Sign(token, jwt.WithKey(jwa.RS256, qsealcKey))
 	if err != nil {
