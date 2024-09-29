@@ -1,0 +1,40 @@
+{
+  "keys": [
+    {
+      "d": "",
+      "e": "AQAB",
+      "use": "sig",
+      "kid": "qwac-Yyqqig",
+      "x5c": [
+        "key",
+        "key"
+      ],
+      "dp": "dp",
+      "dq": "dq",
+      "n": "n",
+      "p": "p",
+      "kty": "RSA",
+      "q": "q",
+      "qi": "qi",
+      "alg": "RS256"
+    },
+    {
+      "d": "",
+      "e": "AQAB",
+      "use": "sig",
+      "kid": "qeseal-CzFeDA",
+      "x5c": [
+        "key",
+        "key"
+      ],
+      "dp": "dp",
+      "dq": "dq",
+      "n": "n",
+      "p": "p",
+      "kty": "RSA",
+      "q": "q",
+      "qi": "qi",
+      "alg": "RS256"
+    }
+  ]
+}
